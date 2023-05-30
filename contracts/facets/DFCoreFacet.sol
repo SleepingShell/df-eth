@@ -104,21 +104,31 @@ contract DFCoreFacet is WithStorage {
         return true;
     }
 
+    /// Layout:
+    /// 0 - x.value
+    /// 1 - x.is_neg
+    /// 2 - y.value
+    /// 3 - y.is_neg
+    /// 4 - scale
+    /// 5 - planethash_key
+    /// 6 - spacetype_key
+    /// 7 - commit (Location)
+    /// 8 - Perlin
     function revealLocation(
         uint256[9] memory _input,
         bytes memory _proof
     ) public onlyWhitelisted returns (uint256) {
         require(checkRevealProof(_input, _proof), "Failed reveal pf check");
 
-        if (!gs().planetsExtendedInfo[_input[0]].isInitialized) {
-            LibPlanet.initializePlanetWithDefaults(_input[0], _input[1], false);
+        if (!gs().planetsExtendedInfo[_input[7]].isInitialized) {
+            LibPlanet.initializePlanetWithDefaults(_input[7], _input[8], false);
         }
 
         LibPlanet.revealLocation(
+            _input[7],
+            _input[8],
             _input[0],
-            _input[1],
             _input[2],
-            _input[3],
             msg.sender != LibDiamond.contractOwner()
         );
         emit LocationRevealed(msg.sender, _input[0], _input[2], _input[3]);
