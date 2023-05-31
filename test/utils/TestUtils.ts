@@ -74,7 +74,9 @@ export function makeRevealArgs(
   ];
 }
 
-export async function makeWhitelistArgs(key: string, recipient: string) {
+export async function makeWhitelistArgs(key: string, recipient: string):
+  Promise<[[BigNumberish, BigNumberish], BytesLike]> {
+  /*
   const input: WhitelistSnarkInput = {
     key: bigIntFromKey(key).toString(),
     recipient: bigInt(recipient.substring(2), 16).toString(),
@@ -87,6 +89,14 @@ export async function makeWhitelistArgs(key: string, recipient: string) {
   );
   const { proof, publicSignals }: SnarkJSProofAndSignals = fullProveResponse;
   return buildContractCallArgs(proof, publicSignals) as WhitelistSnarkContractCallArgs;
+  */
+  return [
+    [
+      0,
+      0
+    ],
+    [0]
+  ]
 }
 
 export function makeInitArgs(
@@ -158,7 +168,7 @@ export function makeMoveArgs(
       movedArtifactId,
       abandoning
     ],
-    ""
+    [0]
   ]
 }
 
