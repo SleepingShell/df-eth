@@ -67,8 +67,8 @@ library LibGameUtils {
             require(perlinFlags[1] == snarkConstants().SPACETYPE_KEY, "bad spacetype mimc key");
         }
         require(perlinFlags[2] == snarkConstants().PERLIN_LENGTH_SCALE, "bad perlin length scale");
-        require((perlinFlags[3] == 1) == snarkConstants().PERLIN_MIRROR_X, "bad perlin mirror x");
-        require((perlinFlags[4] == 1) == snarkConstants().PERLIN_MIRROR_Y, "bad perlin mirror y");
+        //require((perlinFlags[3] == 1) == snarkConstants().PERLIN_MIRROR_X, "bad perlin mirror x");
+        //require((perlinFlags[4] == 1) == snarkConstants().PERLIN_MIRROR_Y, "bad perlin mirror y");
 
         return true;
     }

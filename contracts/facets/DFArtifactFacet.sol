@@ -135,9 +135,10 @@ contract DFArtifactFacet is WithStorage, ERC721 {
     }
 
     function findArtifact(
-        uint256[7] memory _input,
+        uint256[2] memory _input,
         bytes memory _proof
     ) public notPaused notTokenEnded {
+        /*
         uint256 planetId = _input[0];
         uint256 biomebase = _input[1];
 
@@ -163,6 +164,7 @@ contract DFArtifactFacet is WithStorage, ERC721 {
             LibArtifactUtils.findArtifact(DFPFindArtifactArgs(planetId, biomebase, address(this)));
 
         emit ArtifactFound(msg.sender, foundArtifactId, planetId);
+        */
     }
 
     function depositArtifact(uint256 locationId, uint256 artifactId) public notPaused {

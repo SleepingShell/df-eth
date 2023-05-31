@@ -11,7 +11,7 @@ import {
 import { ArtifactRarity, ArtifactType, Biome } from '@darkforest_eth/types';
 import { bigIntFromKey } from '@darkforest_eth/whitelist';
 import bigInt from 'big-integer';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, BytesLike } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 // @ts-ignore
 import * as snarkjs from 'snarkjs';
@@ -44,39 +44,33 @@ export function makeRevealArgs(
   x: number,
   y: number
 ): [
-  [BigNumberish, BigNumberish],
-  [[BigNumberish, BigNumberish], [BigNumberish, BigNumberish]],
-  [BigNumberish, BigNumberish],
-  [
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish
-  ]
-] {
-  return [
-    [BN_ZERO, BN_ZERO],
     [
-      [BN_ZERO, BN_ZERO],
-      [BN_ZERO, BN_ZERO],
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
     ],
-    [BN_ZERO, BN_ZERO],
+    BytesLike
+  ]
+  {
+  return [
     [
       planetLoc.id,
       planetLoc.perlin,
-      modPBigInt(x).toString(),
-      modPBigInt(y).toString(),
+      x.toString(),
+      0,
+      y.toString(),
+      0,
       PLANETHASH_KEY,
       SPACETYPE_KEY,
       PERLIN_LENGTH_SCALE,
-      PERLIN_MIRROR_X ? '1' : '0',
-      PERLIN_MIRROR_Y ? '1' : '0',
     ],
+    [0]
   ];
 }
 
@@ -99,38 +93,28 @@ export function makeInitArgs(
   planetLoc: TestLocation,
   spawnRadius: number = initializers.WORLD_RADIUS_MIN
 ): [
-  [BigNumberish, BigNumberish],
-  [[BigNumberish, BigNumberish], [BigNumberish, BigNumberish]],
-  [BigNumberish, BigNumberish],
-  [
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish
-  ]
-] {
-  return [
-    [BN_ZERO, BN_ZERO],
     [
-      [BN_ZERO, BN_ZERO],
-      [BN_ZERO, BN_ZERO],
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
     ],
-    [BN_ZERO, BN_ZERO],
+    BytesLike
+  ]
+  {
+  return [
     [
       planetLoc.id,
       planetLoc.perlin,
       spawnRadius,
       PLANETHASH_KEY,
       SPACETYPE_KEY,
-      PERLIN_LENGTH_SCALE,
-      PERLIN_MIRROR_X ? '1' : '0',
-      PERLIN_MIRROR_Y ? '1' : '0',
+      PERLIN_LENGTH_SCALE
     ],
-  ];
+    [0]
+  ]
 }
 
 export function makeMoveArgs(
@@ -142,33 +126,24 @@ export function makeMoveArgs(
   movedArtifactId: BigNumberish = 0,
   abandoning: BigNumberish = 0
 ): [
-  [BigNumberish, BigNumberish],
-  [[BigNumberish, BigNumberish], [BigNumberish, BigNumberish]],
-  [BigNumberish, BigNumberish],
-  [
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish,
-    BigNumberish
+      [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+    BytesLike
   ]
-] {
+  {
   return [
-    [0, 0],
-    [
-      [0, 0],
-      [0, 0],
-    ],
-    [0, 0],
     [
       oldLoc.id,
       newLoc.id,
@@ -178,41 +153,31 @@ export function makeMoveArgs(
       PLANETHASH_KEY,
       SPACETYPE_KEY,
       PERLIN_LENGTH_SCALE,
-      PERLIN_MIRROR_X ? '1' : '0',
-      PERLIN_MIRROR_Y ? '1' : '0',
       popMoved,
       silverMoved,
       movedArtifactId,
-      abandoning,
+      abandoning
     ],
-  ];
+    ""
+  ]
 }
 
 export function makeFindArtifactArgs(
   location: TestLocation
 ): [
-  [BigNumberish, BigNumberish],
-  [[BigNumberish, BigNumberish], [BigNumberish, BigNumberish]],
-  [BigNumberish, BigNumberish],
-  [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+  [
+    BigNumberish,
+    BigNumberish
+  ],
+  BytesLike
 ] {
   return [
-    [1, 2],
     [
-      [1, 2],
-      [3, 4],
+      0,
+      0
     ],
-    [5, 6],
-    [
-      location.id,
-      1,
-      PLANETHASH_KEY,
-      BIOMEBASE_KEY,
-      PERLIN_LENGTH_SCALE,
-      PERLIN_MIRROR_X ? '1' : '0',
-      PERLIN_MIRROR_Y ? '1' : '0',
-    ],
-  ];
+    ""
+  ]
 }
 
 /**

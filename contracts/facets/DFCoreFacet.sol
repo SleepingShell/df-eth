@@ -97,7 +97,7 @@ contract DFCoreFacet is WithStorage {
         verifyProof(ProofType.Reveal, _proof, ins);
 
         LibGameUtils.revertIfBadSnarkPerlinFlags(
-            [_input[4], _input[5], _input[6], _input[7], _input[8]],
+            [_input[6], _input[7], _input[8], _input[0], _input[0]],
             false
         );
 
@@ -105,15 +105,16 @@ contract DFCoreFacet is WithStorage {
     }
 
     /// Layout:
-    /// 0 - x.value
-    /// 1 - x.is_neg
-    /// 2 - y.value
-    /// 3 - y.is_neg
-    /// 4 - scale
-    /// 5 - planethash_key
-    /// 6 - spacetype_key
-    /// 7 - commit (Location)
-    /// 8 - Perlin
+    /// 0 - commit (Location)
+    /// 1 - Perlin
+    /// 2 - x.value
+    /// 3 - x.is_neg
+    /// 4 - y.value
+    /// 5 - y.is_neg
+    /// 6 - planethash_key
+    /// 7 - spacetype_key
+    /// 8 - scale
+    
     function revealLocation(
         uint256[9] memory _input,
         bytes memory _proof
@@ -125,17 +126,24 @@ contract DFCoreFacet is WithStorage {
         }
 
         LibPlanet.revealLocation(
-            _input[7],
-            _input[8],
             _input[0],
+            _input[1],
             _input[2],
+            _input[4],
             msg.sender != LibDiamond.contractOwner()
         );
         emit LocationRevealed(msg.sender, _input[0], _input[2], _input[3]);
     }
 
+    /// Layout:
+    /// 0 - location (commit)
+    /// 1 - perlin
+    /// 2 - radius
+    /// 3 - planethash_key
+    /// 4 - spacetype_key
+    /// 5 - scale
     function initializePlayer(
-        uint256[8] memory _input,
+        uint256[6] memory _input,
         bytes memory _proof
     ) public onlyWhitelisted returns (uint256) {
         LibPlanet.initializePlanet(_input, _proof, true);

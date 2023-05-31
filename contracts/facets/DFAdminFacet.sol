@@ -81,7 +81,7 @@ contract DFAdminFacet is WithStorage {
      */
     function safeSetOwner(
         address newOwner,
-        uint256[8] memory _input,
+        uint256[6] memory _input,
         bytes memory _proof
     ) public onlyAdmin {
         uint256 planetId = _input[0];

@@ -41,12 +41,26 @@ contract DFMoveFacet is WithStorage {
         uint256 abandoning
     );
 
+    /// Layout:
+    /// 0 - oldLocation (commit1)
+    /// 1 - newLocation (commit2)
+    /// 2 - newPerlin
+    /// 3 - radius
+    /// 4 - max move distance
+    /// 5 - planethash_key
+    /// 6 - spacetype_key
+    /// 7 - scale
+    /// =====Non-proof args=====
+    /// 8 - Population moved
+    /// 9 - Silver moved
+    /// 10 - ArtifactId moved
+    /// 11 - abandoning
     function move(
-        uint256[14] memory _input,
+        uint256[12] memory _input,
         bytes memory _proof
     ) public notPaused returns (uint256) {
         LibGameUtils.revertIfBadSnarkPerlinFlags(
-            [_input[5], _input[6], _input[7], _input[8], _input[9]],
+            [_input[5], _input[6], _input[7], _input[0], _input[0]],
             false
         );
 
@@ -55,10 +69,10 @@ contract DFMoveFacet is WithStorage {
                 oldLoc: _input[0],
                 newLoc: _input[1],
                 maxDist: _input[4],
-                popMoved: _input[10],
-                silverMoved: _input[11],
-                movedArtifactId: _input[12],
-                abandoning: _input[13],
+                popMoved: _input[8],
+                silverMoved: _input[9],
+                movedArtifactId: _input[10],
+                abandoning: _input[11],
                 sender: msg.sender
             });
 
@@ -72,7 +86,7 @@ contract DFMoveFacet is WithStorage {
         uint256 newRadius = _input[3];
 
         if (!snarkConstants().DISABLE_ZK_CHECKS) {
-            uint256[] memory _proofInput = new uint256[](10);
+            uint256[] memory _proofInput = new uint256[](8);
             _proofInput[0] = args.oldLoc;
             _proofInput[1] = args.newLoc;
             _proofInput[2] = newPerlin;
@@ -81,8 +95,6 @@ contract DFMoveFacet is WithStorage {
             _proofInput[5] = _input[5];
             _proofInput[6] = _input[6];
             _proofInput[7] = _input[7];
-            _proofInput[8] = _input[8];
-            _proofInput[9] = _input[9];
             require(verifyProof(ProofType.Move, _proof, _proofInput));
         }
 

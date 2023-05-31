@@ -349,13 +349,10 @@ export async function deployDebugFacet({}, {}: Libraries, hre: HardhatRuntimeEnv
 
 export async function deployWhitelistFacet(
   {},
-  { Verifier }: Libraries,
+  {}: Libraries,
   hre: HardhatRuntimeEnvironment
 ) {
   const factory = await hre.ethers.getContractFactory('DFWhitelistFacet', {
-    libraries: {
-      Verifier,
-    },
   });
   const contract = await factory.deploy();
   await contract.deployTransaction.wait();
@@ -365,12 +362,11 @@ export async function deployWhitelistFacet(
 
 export async function deployArtifactFacet(
   {},
-  { LibGameUtils, LibPlanet, LibArtifactUtils, Verifier }: Libraries,
+  { LibGameUtils, LibPlanet, LibArtifactUtils }: Libraries,
   hre: HardhatRuntimeEnvironment
 ) {
   const factory = await hre.ethers.getContractFactory('DFArtifactFacet', {
     libraries: {
-      Verifier,
       LibArtifactUtils,
       LibGameUtils,
       LibPlanet,
@@ -383,9 +379,9 @@ export async function deployArtifactFacet(
 }
 
 export async function deployLibraries({}, hre: HardhatRuntimeEnvironment) {
-  const VerifierFactory = await hre.ethers.getContractFactory('Verifier');
-  const Verifier = await VerifierFactory.deploy();
-  await Verifier.deployTransaction.wait();
+  //const VerifierFactory = await hre.ethers.getContractFactory('Verifier');
+  //const Verifier = await VerifierFactory.deploy();
+  //await Verifier.deployTransaction.wait();
 
   const LibGameUtilsFactory = await hre.ethers.getContractFactory('LibGameUtils');
   const LibGameUtils = await LibGameUtilsFactory.deploy();
@@ -408,7 +404,7 @@ export async function deployLibraries({}, hre: HardhatRuntimeEnvironment) {
     libraries: {
       LibGameUtils: LibGameUtils.address,
       LibLazyUpdate: LibLazyUpdate.address,
-      Verifier: Verifier.address,
+      //Verifier: Verifier.address,
     },
   });
   const LibPlanet = await LibPlanetFactory.deploy();
@@ -417,19 +413,18 @@ export async function deployLibraries({}, hre: HardhatRuntimeEnvironment) {
   return {
     LibGameUtils: LibGameUtils.address,
     LibPlanet: LibPlanet.address,
-    Verifier: Verifier.address,
+    //Verifier: Verifier.address,
     LibArtifactUtils: LibArtifactUtils.address,
   };
 }
 
 export async function deployCoreFacet(
   {},
-  { Verifier, LibGameUtils, LibPlanet }: Libraries,
+  { LibGameUtils, LibPlanet }: Libraries,
   hre: HardhatRuntimeEnvironment
 ) {
   const factory = await hre.ethers.getContractFactory('DFCoreFacet', {
     libraries: {
-      Verifier,
       LibGameUtils,
       LibPlanet,
     },
@@ -442,12 +437,11 @@ export async function deployCoreFacet(
 
 export async function deployMoveFacet(
   {},
-  { Verifier, LibGameUtils, LibArtifactUtils, LibPlanet }: Libraries,
+  { LibGameUtils, LibArtifactUtils, LibPlanet }: Libraries,
   hre: HardhatRuntimeEnvironment
 ) {
   const factory = await hre.ethers.getContractFactory('DFMoveFacet', {
     libraries: {
-      Verifier,
       LibGameUtils,
       LibArtifactUtils,
       LibPlanet,

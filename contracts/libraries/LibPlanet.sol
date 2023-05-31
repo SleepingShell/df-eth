@@ -96,7 +96,7 @@ library LibPlanet {
      * Same SNARK args as `initializePlayer`. Adds a planet to the smart contract without setting an owner.
      */
     function initializePlanet(
-        uint256[8] memory _input,
+        uint256[6] memory _input,
         bytes memory _proof,
         bool isHomePlanet
     ) public {
@@ -113,7 +113,7 @@ library LibPlanet {
         uint256 _perlin = _input[1];
 
         LibGameUtils.revertIfBadSnarkPerlinFlags(
-            [_input[3], _input[4], _input[5], _input[6], _input[7]],
+            [_input[3], _input[4], _input[5], _input[0], _input[0]],
             false
         );
 

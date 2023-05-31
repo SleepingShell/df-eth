@@ -101,7 +101,7 @@ describe('DarkForestReveal', function () {
     const x = 10;
     const y = 20;
     const args = makeRevealArgs(SPAWN_PLANET_1, x, y);
-    args[3][4] = parseInt(args[3][4].toString()) + 1;
+    args[0][6] = parseInt(args[0][6].toString()) + 1;
     await expect(world.user1Core.revealLocation(...args)).to.be.revertedWith(
       'bad planethash mimc key'
     );

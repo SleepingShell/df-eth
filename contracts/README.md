@@ -64,3 +64,7 @@ Other inspiration for the implementation came from Aavegotchi's [ghst-staking](h
 For a previous version of the the Diamond pattern spec, Trail of Bits released an article titled [Good idea, bad design: How the Diamond standard falls short](https://blog.trailofbits.com/2020/10/30/good-idea-bad-design-how-the-diamond-standard-falls-short/); however, Nick Mudge addressed these concerns in a [follow-up article](https://dev.to/mudgen/addressing-josselin-feist-s-concern-s-of-eip-2535-diamond-standard-me8) that outlined how the EIP-2535 had been updated to address the concerns.
 
 Nick Mudge maintains a [list of security audits](https://eip2535diamonds.substack.com/p/smart-contract-security-audits-for) against the three different reference implementations of the Diamond pattern.
+
+# Noir implementation
+
+## Argument ordering
