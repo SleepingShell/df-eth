@@ -9,7 +9,7 @@ import {
   whitelistSnarkZkeyPath,
 } from '@darkforest_eth/snarks';
 import { ArtifactRarity, ArtifactType, Biome } from '@darkforest_eth/types';
-import { bigIntFromKey } from '@darkforest_eth/whitelist';
+import { bigIntFromKey, keyHash } from '@darkforest_eth/whitelist';
 import bigInt from 'big-integer';
 import { BigNumber, BigNumberish, BytesLike } from 'ethers';
 import { ethers, waffle } from 'hardhat';
@@ -92,8 +92,8 @@ export async function makeWhitelistArgs(key: string, recipient: string):
   */
   return [
     [
-      0,
-      0
+      keyHash(key),
+      bigInt(recipient.substring(2),16).toString()
     ],
     [0]
   ]
@@ -177,16 +177,22 @@ export function makeFindArtifactArgs(
 ): [
   [
     BigNumberish,
+    BigNumberish,
+    BigNumberish,
+    BigNumberish,
     BigNumberish
   ],
   BytesLike
 ] {
   return [
     [
-      0,
-      0
+      location.id,
+      location.perlin,
+      PLANETHASH_KEY,
+      BIOMEBASE_KEY,
+      PERLIN_LENGTH_SCALE,
     ],
-    ""
+    [0]
   ]
 }
 

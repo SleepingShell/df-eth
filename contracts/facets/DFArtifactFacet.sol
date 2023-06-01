@@ -135,26 +135,24 @@ contract DFArtifactFacet is WithStorage, ERC721 {
     }
 
     function findArtifact(
-        uint256[2] memory _input,
+        uint256[5] memory _input,
         bytes memory _proof
     ) public notPaused notTokenEnded {
-        /*
         uint256 planetId = _input[0];
         uint256 biomebase = _input[1];
 
         LibGameUtils.revertIfBadSnarkPerlinFlags(
-            [_input[2], _input[3], _input[4], _input[5], _input[6]],
+            [_input[2], _input[3], _input[4], _input[0], _input[0]],
             true
         );
 
         LibPlanet.refreshPlanet(planetId);
 
         if (!snarkConstants().DISABLE_ZK_CHECKS) {
-            uint256[] memory ins = new uint256[](7);
+            uint256[] memory ins = new uint256[](5);
             ins[0] = _input[0]; ins[1] = _input[1];
             ins[2] = _input[2]; ins[3] = _input[3];
-            ins[4] = _input[4]; ins[5] = _input[5];
-            ins[6] = _input[6];
+            ins[4] = _input[4];
             require(
                 verifyProof(ProofType.Biomebase, _proof, ins)
             );
@@ -164,7 +162,6 @@ contract DFArtifactFacet is WithStorage, ERC721 {
             LibArtifactUtils.findArtifact(DFPFindArtifactArgs(planetId, biomebase, address(this)));
 
         emit ArtifactFound(msg.sender, foundArtifactId, planetId);
-        */
     }
 
     function depositArtifact(uint256 locationId, uint256 artifactId) public notPaused {
