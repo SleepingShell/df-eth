@@ -8,7 +8,7 @@ import {LibPlanet} from "../libraries/LibPlanet.sol";
 import {LibArtifactUtils} from "../libraries/LibArtifactUtils.sol";
 
 // Storage imports
-import {WithStorage} from "../libraries/LibStorage.sol";
+import {WithStorage, ProofType} from "../libraries/LibStorage.sol";
 
 // Type imports
 import {
@@ -180,5 +180,9 @@ contract DFAdminFacet is WithStorage {
 
     function setPlanetTransferEnabled(bool enabled) public onlyAdmin {
         gameConstants().PLANET_TRANSFER_ENABLED = enabled;
+    }
+
+    function addVerifier(ProofType t, address verifier) public onlyAdmin {
+        snarkConstants().verifiers[t] = verifier;
     }
 }

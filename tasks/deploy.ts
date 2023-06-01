@@ -530,3 +530,20 @@ export async function deployLobbyFacet({}, {}: Libraries, hre: HardhatRuntimeEnv
   console.log(`DFLobbyFacet deployed to: ${contract.address}`);
   return contract;
 }
+
+/// Noir Verifiers
+export async function deployVerifierInit(hre: HardhatRuntimeEnvironment) {
+  const factory = await hre.ethers.getContractFactory('UltraVerifierInit');
+  const contract = await factory.deploy();
+  await contract.deployTransaction.wait();
+  console.log(`Init Verifier deployed to: ${contract.address}`);
+  return contract;
+}
+
+export async function deployVerifierReveal(hre: HardhatRuntimeEnvironment) {
+  const factory = await hre.ethers.getContractFactory('UltraVerifierReveal');
+  const contract = await factory.deploy();
+  await contract.deployTransaction.wait();
+  console.log(`Reveal Verifier deployed to: ${contract.address}`);
+  return contract;
+}
