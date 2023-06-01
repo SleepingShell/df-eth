@@ -4,6 +4,7 @@ yarn-error.log
 .gitkeep
 *.env
 .env.prod
+contracts/verifiers/*.sol
 
 .openzeppelin/unknown-*.json
 !.openzeppelin/unknown-100.json
