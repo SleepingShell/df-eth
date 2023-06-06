@@ -36,6 +36,15 @@ export function defaultWorldFixture(): Promise<World> {
   });
 }
 
+export function defaultSnarksWorldFixture(): Promise<World> {
+  const t = initializers;
+  t.DISABLE_ZK_CHECKS = false;
+  return initializeWorld({
+    initializers: t,
+    whitelistEnabled: false,
+  })
+}
+
 export function growingWorldFixture(): Promise<World> {
   return initializeWorld({
     initializers: target4Initializers,
