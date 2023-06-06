@@ -121,8 +121,8 @@ contract DFCoreFacet is WithStorage {
     ) public onlyWhitelisted returns (uint256) {
         require(checkRevealProof(_input, _proof), "Failed reveal pf check");
 
-        if (!gs().planetsExtendedInfo[_input[7]].isInitialized) {
-            LibPlanet.initializePlanetWithDefaults(_input[7], _input[8], false);
+        if (!gs().planetsExtendedInfo[_input[0]].isInitialized) {
+            LibPlanet.initializePlanetWithDefaults(_input[0], _input[1], false);
         }
 
         LibPlanet.revealLocation(
