@@ -6,7 +6,7 @@
   "author": "0xPARC <ivan@0xPARC.org>",
   "main": "index.js",
   "devDependencies": {
-    "@darkforest_eth/contracts": "6.7.29",
+    "@darkforest_eth/contracts": "^6.7.29",
     "@darkforest_eth/hashing": "6.7.29",
     "@darkforest_eth/settings": "6.7.29",
     "@darkforest_eth/snarks": "6.7.29",
@@ -66,7 +66,7 @@
     "node": ">=16"
   },
   "scripts": {
-    "test": "hardhat test && yarn subgraph:template:dev",
+    "test": "hardhat test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "hardhat:node": "hardhat node --hostname 0.0.0.0",
