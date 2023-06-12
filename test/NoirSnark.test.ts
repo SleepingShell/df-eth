@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { gunzipSync } from 'zlib';
 import { execSync } from 'child_process';
 
-import {stringify} from '@iarna/toml';
+import {parse, stringify} from '@iarna/toml';
 import path from 'path';
 import { BytesLike, keccak256 } from 'ethers/lib/utils';
 import { defaultSnarksWorldFixture } from './utils/TestWorld';
@@ -20,14 +20,13 @@ import 'dotenv/config';
 import { SPAWN_PLANET_1, initializers } from './utils/WorldConstants';
 import { TestLocation } from './utils/TestLocation';
 
-const {
-  PLANETHASH_KEY,
-  SPACETYPE_KEY,
-  BIOMEBASE_KEY,
-  PERLIN_LENGTH_SCALE,
-  PERLIN_MIRROR_X,
-  PERLIN_MIRROR_Y,
-} = initializers;
+const toml = parse(readFileSync("darkforest.toml").toString());
+
+const PLANETHASH_KEY = toml["initializers"]["PLANETHASH_KEY"];
+const SPACETYPE_KEY = toml["initializers"]["SPACETYPE_KEY"];
+const BIOMEBASE_KEY = toml["initializers"]["BIOMEBASE_KEY"];
+const PERLIN_LENGTH_SCALE = toml["initializers"]["PERLIN_LENGTH_SCALE"];
+const WORLD_RADIUS_MIN = toml["initializers"]["WORLD_RADIUS_MIN"];
 
 describe('NoirSnark', () => {
   let world: DarkForest;
@@ -86,7 +85,7 @@ export async function makeWhitelistArgs(key: string, recipient: string):
 
 export function makeInitArgs(
   planetLoc: TestLocation,
-  spawnRadius: number = initializers.WORLD_RADIUS_MIN
+  spawnRadius: number = WORLD_RADIUS_MIN
 ): [
     [
       BigNumberish,
@@ -104,9 +103,9 @@ export function makeInitArgs(
       planetLoc.id,
       planetLoc.perlin,
       spawnRadius,
-      115,
-      SPACETYPE_KEY,
-      PERLIN_LENGTH_SCALE
+      PLANETHASH_KEY as number,
+      SPACETYPE_KEY as number,
+      PERLIN_LENGTH_SCALE as number
     ],
     [0]
   ]
@@ -125,14 +124,14 @@ interface AbiHashes {
   [key: string]: string;
 }
 
-function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation, spawnRadius: number = initializers.WORLD_RADIUS_MIN): string {
+function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation, spawnRadius: number = WORLD_RADIUS_MIN): string {
   const args = stringify(Object.assign({}, {
     commit: '0x'+planetLoc.hex,
     perlin: '0x'+planetLoc.perlin.toString(16).padStart(2, '0'),
-    planethash_key: PLANETHASH_KEY,
+    planethash_key: PLANETHASH_KEY as number,
     r: spawnRadius,
-    scale: PERLIN_LENGTH_SCALE,
-    spacetype_key: SPACETYPE_KEY,
+    scale: PERLIN_LENGTH_SCALE as number,
+    spacetype_key: SPACETYPE_KEY as number,
 
     point: {
       x: {
