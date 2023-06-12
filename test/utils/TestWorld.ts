@@ -89,14 +89,6 @@ export async function initializeWorld({
     value: utils.parseEther('0.5'), // good for about (100eth / 0.5eth/test) = 200 tests
   });
 
-  /// Noir verifiers
-  const verifierInit = await deployVerifierInit(hre);
-  const verifierReveal = await deployVerifierReveal(hre);
-  
-  await contract.addVerifier(0, verifierInit.address);
-  await contract.addVerifier(3, verifierReveal.address);
-  console.log("Added verifiers to the storage mapping");
-
   return {
     // If any "admin only" contract state needs to be changed, use `contracts`
     // to call methods with deployer privileges. e.g. `world.contracts.core.pause()`

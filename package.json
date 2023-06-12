@@ -85,9 +85,11 @@
     "deploy:contracts": "hardhat --network localhost deploy",
     "hardhat:deploy": "run-s wait:node \"deploy:contracts {@}\" --",
     "start": "run-p hardhat:node \"hardhat:deploy {@}\" --",
-    "test:snarks": "hardhat test test/NoirSnark.test.ts"
+
+    "test:snarks" : "vitest test/NoirSnark.test.ts"
   },
   "dependencies": {
-    "@aztec/bb.js": "^0.0.1-alpha.7"
+    "@aztec/bb.js": "^0.0.1-alpha.7",
+    "vitest": "^0.32.0"
   }
 }

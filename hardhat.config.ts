@@ -95,10 +95,6 @@ const config: HardhatUserConfig = {
     ...(DEPLOYER_MNEMONIC ? { mainnet } : undefined),
     localhost: {
       url: 'http://localhost:8545/',
-      accounts: {
-        // Same mnemonic used in the .env.example
-        mnemonic: 'change typical hire slam amateur loan grid fix drama electric seed label',
-      },
       chainId: 31337,
     },
     // Used when you dont specify a network on command line, like in tests
@@ -121,7 +117,7 @@ const config: HardhatUserConfig = {
           balance: '100000000000000000000',
         },
       ],
-      blockGasLimit: 16777215,
+      blockGasLimit: 3000000000,
       mining: {
         auto: false,
         interval: 1000,

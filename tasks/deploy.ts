@@ -302,6 +302,14 @@ export async function deployAndCut(
   }
   console.log('Completed diamond cut');
 
+    /// Noir verifiers
+    const verifierInit = await deployVerifierInit(hre);
+    const verifierReveal = await deployVerifierReveal(hre);
+    
+    await diamondCut.addVerifier(0, verifierInit.address);
+    await diamondCut.addVerifier(3, verifierReveal.address);
+    console.log("Added verifiers to the storage mapping");
+
   return [diamond, diamondInit, initReceipt] as const;
 }
 
