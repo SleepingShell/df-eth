@@ -304,10 +304,14 @@ export async function deployAndCut(
 
     /// Noir verifiers
     const verifierInit = await deployVerifierInit(hre);
+    const verifierMove = await deployVerifierMove(hre);
     const verifierReveal = await deployVerifierReveal(hre);
+    const verifierWhitelist = await deployVerifierWhitelist(hre);
     
     await diamondCut.addVerifier(0, verifierInit.address);
+    await diamondCut.addVerifier(1, verifierMove.address);
     await diamondCut.addVerifier(3, verifierReveal.address);
+    await diamondCut.addVerifier(4, verifierWhitelist.address);
     console.log("Added verifiers to the storage mapping");
 
   return [diamond, diamondInit, initReceipt] as const;
@@ -553,5 +557,21 @@ export async function deployVerifierReveal(hre: HardhatRuntimeEnvironment) {
   const contract = await factory.deploy();
   await contract.deployTransaction.wait();
   console.log(`Reveal Verifier deployed to: ${contract.address}`);
+  return contract;
+}
+
+export async function deployVerifierMove(hre: HardhatRuntimeEnvironment) {
+  const factory = await hre.ethers.getContractFactory('UltraVerifierMove');
+  const contract = await factory.deploy();
+  await contract.deployTransaction.wait();
+  console.log(`Move Verifier deployed to: ${contract.address}`);
+  return contract;
+}
+
+export async function deployVerifierWhitelist(hre: HardhatRuntimeEnvironment) {
+  const factory = await hre.ethers.getContractFactory('UltraVerifierWhitelist');
+  const contract = await factory.deploy();
+  await contract.deployTransaction.wait();
+  console.log(`Whitelist Verifier deployed to: ${contract.address}`);
   return contract;
 }

@@ -1,20 +1,18 @@
 import ethers, { BigNumberish, Contract } from 'ethers';
-//import { prove, gateCount } from '@aztec/bb.js/dest/main';
-import { gateCount } from '@aztec/bb.js/dest/main'
-import { newBarretenbergApiSync, BarretenbergApiAsync, RawBuffer } from '@aztec/bb.js/dest';
 
 import { test, beforeAll, describe, expect } from 'vitest';
 import { readFileSync, writeFileSync } from 'fs';
-import { gunzipSync } from 'zlib';
 import { execSync } from 'child_process';
 
 import {parse, stringify} from '@iarna/toml';
 import path from 'path';
 import { BytesLike, keccak256 } from 'ethers/lib/utils';
-import { defaultSnarksWorldFixture } from './utils/TestWorld';
+
+import { buildMimc7 as buildMimc } from 'circomlibjs';
 
 import  df from "../artifacts/hardhat-diamond-abi/DarkForest.sol/DarkForest.json";
 import { DarkForest } from '@darkforest_eth/contracts/typechain';
+import { bigIntFromKey, generateKeys } from '@darkforest_eth/whitelist';
 
 import 'dotenv/config';
 import { SPAWN_PLANET_1, initializers } from './utils/WorldConstants';
@@ -28,6 +26,17 @@ const BIOMEBASE_KEY = toml["initializers"]["BIOMEBASE_KEY"];
 const PERLIN_LENGTH_SCALE = toml["initializers"]["PERLIN_LENGTH_SCALE"];
 const WORLD_RADIUS_MIN = toml["initializers"]["WORLD_RADIUS_MIN"];
 
+const mimc = await buildMimc();
+
+const keyHash = (key: string): string => {
+  //let input = bigIntFromKey(key).toString();
+  const hash = mimc.multiHash([key]);
+  return "0x" + (mimc.F.toString(hash, 16) as string).padStart(64,'0');
+}
+
+const keys = generateKeys(2).map(v => bigIntFromKey(v).toString());
+const keyHashes = keys.map(keyHash);
+
 describe('NoirSnark', () => {
   let world: DarkForest;
 
@@ -37,53 +46,50 @@ describe('NoirSnark', () => {
     provider
   );
 
-  beforeAll(() => {
-    const CONTRACT_ADDRESS = "0x884e9AF7c4bc2B12B8e0Cc5538926986ccf4E670";
+  beforeAll(async () => {
+    const CONTRACT_ADDRESS = "0x79D3ACC9009A7617b7E652F2DC1443607bf96f45";
     world = (new ethers.ContractFactory(df.abi, df.bytecode, wallet)).attach(CONTRACT_ADDRESS) as DarkForest;
+
+    await world.addKeys(keyHashes);
   });
 
-  test('Whitelist snark', async () => {
-    /*
-    const api = await newBarretenbergApiSync();
-
-    const path = '../whitelist/target/whitelist.json'
-    const b = await api.acirGetCircuitSizes(new RawBuffer(getBytecode(path)));
-    console.log(b);
-    */
-    // The above code can be used when bb.js and Nargo are in sync. Currently the bytecode is compressed differently
-    // so this cannot be used...
-
-    let x: WhitelistSNARKArgs = {
-      key: "0x1023",
-      key_hash: "0x01",
-      recipient: "0x02",
-    }
-    
-    const t = stringify(x);
-    console.log(t);
-
-    const proof = proveInit(10,20, SPAWN_PLANET_1);
-    const callArgs = makeInitArgs(SPAWN_PLANET_1);
-    callArgs[1] = proof
+  test('Init', async () => {    
+    const planet = Object.assign({}, SPAWN_PLANET_1);
+    planet.perlin = 13;
+    const proof = proveInit(10,20, planet);
+    const callArgs = makeInitArgs(proof, planet);
     await world.initializePlayer(...callArgs, { gasLimit: 30000000});
-    //await world.useKey(...(await makeWhitelistArgs("0x00", wallet.address)));
-    //console.log(await world.isWhitelisted(wallet.address));
+  });
+
+  test('Reveal', async () => {
+
+  });
+
+  test('Move', async () => {
+
+  });
+
+  test('Whitelist', async () => {
+    const key = keys[0];
+    const hash = keyHashes[0];
+    const recipient = wallet.address;
+
+    let callArgs = makeWhitelistArgs(key, recipient);
+    const tx = await world.useKey(...callArgs, { gasLimit: 30000000});
+    expect((await tx.wait()).status).eq(1);
+
+    callArgs[0][0] = "0x00"
+    let trigger = false;
+    const tx2 = await world.useKey(...callArgs, { gasLimit: 30000000}).catch(() => trigger = true );
+    expect(trigger);
   })
 })
 
-export async function makeWhitelistArgs(key: string, recipient: string):
-  Promise<[[BigNumberish, BigNumberish], BytesLike]> {
-  return [
-    [
-      keyHash(key),
-      //bigInt(recipient.substring(2),16).toString()
-      BigInt(recipient).toString()
-    ],
-    [0]
-  ]
-}
+const whitelist_folder_path = "../../whitelist";
+const initialize_folder_path = "../../init";
 
-export function makeInitArgs(
+function makeInitArgs(
+  proof: BytesLike,
   planetLoc: TestLocation,
   spawnRadius: number = WORLD_RADIUS_MIN
 ): [
@@ -107,21 +113,107 @@ export function makeInitArgs(
       SPACETYPE_KEY as number,
       PERLIN_LENGTH_SCALE as number
     ],
-    [0]
+    proof
   ]
 }
 
-type WhitelistSNARKArgs = {
-  key: string,
-  key_hash: string,
-  recipient: string
+function makeRevealArgs(
+  proof: BytesLike,
+  planetLoc: TestLocation,
+  x: number,
+  y: number
+): [
+    [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ],
+    BytesLike
+  ]
+  {
+  return [
+    [
+      planetLoc.id,
+      planetLoc.perlin,
+      x.toString(),
+      0,
+      y.toString(),
+      0,
+      PLANETHASH_KEY,
+      SPACETYPE_KEY,
+      PERLIN_LENGTH_SCALE,
+    ],
+    proof
+  ];
 }
 
-const whitelist_folder_path = "../../whitelist";
-const initialize_folder_path = "../../init";
+function makeMoveArgs(
+  proof: BytesLike,
+  oldLoc: TestLocation,
+  newLoc: TestLocation,
+  maxDist: BigNumberish,
+  popMoved: BigNumberish,
+  silverMoved: BigNumberish,
+  movedArtifactId: BigNumberish = 0,
+  abandoning: BigNumberish = 0
+): [
+      [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+    BytesLike
+  ]
+  {
+  return [
+    [
+      oldLoc.id,
+      newLoc.id,
+      newLoc.perlin,
+      newLoc.distFromOrigin + 1,
+      maxDist,
+      PLANETHASH_KEY,
+      SPACETYPE_KEY,
+      PERLIN_LENGTH_SCALE,
+      popMoved,
+      silverMoved,
+      movedArtifactId,
+      abandoning
+    ],
+    proof
+  ]
+}
 
-interface AbiHashes {
-  [key: string]: string;
+function makeWhitelistArgs(key: string, recipient: string): [[BigNumberish, BigNumberish], BytesLike] {
+  let key_hash = keyHash(key);
+
+  let keyStr = BigInt(key).toString(16);
+  keyStr = keyStr.length % 2 != 0 ? '0' + keyStr : keyStr;
+  const proof = proveWhitelist('0x'+keyStr, key_hash, recipient);
+
+  return [
+    [
+      key_hash,
+      recipient
+      //BigInt(recipient).toString()
+    ],
+    proof
+  ]
 }
 
 function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation, spawnRadius: number = WORLD_RADIUS_MIN): string {
@@ -145,17 +237,22 @@ function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation, sp
     }
   }));
 
-  const proof = prove(args, initialize_folder_path, "test");
+  const proof = prove(args, initialize_folder_path);
   return "0x" + proof.toString();
 }
 
-function proveWhitelist(key: string, key_hash: string, recipient: string, test_case: string): string {
-  const args = stringify(Object.assign({}, { key, key_hash, recipient }));
-  const proof = prove(args, whitelist_folder_path, test_case);
+function proveWhitelist(key: string, key_hash: string, recipient: string): string {
+  const obj = Object.assign({}, { key, key_hash, recipient });
+  const args = stringify(obj);
+  const proof = prove(args, whitelist_folder_path);
   return "0x" + proof.toString()
 }
 
-function prove(proverToml: string, folder: string, testCase: string) {
+interface AbiHashes {
+  [key: string]: string;
+}
+
+function prove(proverToml: string, folder: string, testCase: string = "test") {
   const fpath = path.join(__dirname, folder);
   // get the existent hashes for different proof names
   const abiHashes: AbiHashes = JSON.parse(
@@ -195,22 +292,3 @@ function prove(proverToml: string, folder: string, testCase: string) {
   const proof = readFileSync(`${fpath}/proofs/${testCase}.proof`);
   return proof;
 }
-
-
-function keyHash(key: string): ethers.ethers.BigNumberish {
-  throw new Error('Function not implemented.');
-}
-/*
-function getJsonData(jsonPath: string) {
-  const json = readFileSync(jsonPath, 'utf-8');
-  const parsed = JSON.parse(json);
-  return parsed;
-}
-
-function getBytecode(jsonPath: string) {
-  const parsed = getJsonData(jsonPath);
-  const buffer = Buffer.from(parsed.bytecode, 'base64');
-  const decompressed = gunzipSync(buffer);
-  return decompressed;
-}
-*/
