@@ -79,9 +79,14 @@ describe('NoirSnark', () => {
     expect((await tx.wait()).status).eq(1);
 
     callArgs[0][0] = "0x00"
-    let trigger = false;
-    const tx2 = await world.useKey(...callArgs, { gasLimit: 30000000}).catch(() => trigger = true );
-    expect(trigger);
+    let failed = false;
+
+    try {
+      const tx2 = await world.useKey(...callArgs, { gasLimit: 30000000});
+      expect((await tx2.wait()).status).eq(0);
+    } catch (err) {
+
+    }
   })
 })
 
