@@ -89,6 +89,8 @@
   },
   "dependencies": {
     "@aztec/bb.js": "^0.0.1-alpha.7",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
     "circomlibjs": "^0.1.7",
     "vitest": "^0.32.0"
   }

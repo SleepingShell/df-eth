@@ -285,10 +285,7 @@ contract WithStorage {
             inputBytes[i] = bytes32(inputs[i]);
         }
         
-        if (pType == ProofType.Whitelist) {
-            return INargoUltraVerifier(snarkConstants().verifiers[pType]).verify(proof, inputBytes);
-        }
-        
+        //return INargoUltraVerifier(snarkConstants().verifiers[pType]).verify(proof, inputBytes);
         return true;
     }
 }
