@@ -43,6 +43,7 @@ const PLANET_1 = new TestLocation({
   perlin: 16,
   distFromOrigin: 0,
 });
+const PLANET_1_COORDS = [876,949];
 
 // (151, 997)
 const PLANET_2 = new TestLocation({
@@ -50,6 +51,22 @@ const PLANET_2 = new TestLocation({
   perlin: 16,
   distFromOrigin: 0
 })
+const PLANET_2_COORDS = [151, 997];
+
+/*
+const PLANET_INIT = new TestLocation({
+  hex: '00007dc92e38c3ed48bef2c636f7b520e68c0754a08459a0300c37a50131c621',
+  perlin: 13,
+  distFromOrigin: 0
+})
+const PLANET_INIT_COORDS = [884053,929367];
+*/
+const PLANET_INIT = new TestLocation({
+  hex: '596bdd6734a573e6abef5e36ef6b42f713d729e3414c5589def5eb23f474'.padStart(64,'0'),
+  perlin: 15,
+  distFromOrigin: 0
+});
+const PLANET_INIT_COORDS = [20589, 36829]
 
 /*** Tests ***/
 describe('NoirSnark', () => {
@@ -61,30 +78,48 @@ describe('NoirSnark', () => {
     provider
   );
 
+  const increaseBlockchainTime = async (interval = 2*86400) => {
+    await provider.send('evm_increaseTime', [interval]);
+    await provider.send('evm_mine', []);
+  }
+
   beforeAll(async () => {
     const CONTRACT_ADDRESS = "0x8950bab77f29E8f81e6F78AEA0a79bADD88Eeb13";
     world = (new ethers.ContractFactory(df.abi, df.bytecode, wallet)).attach(CONTRACT_ADDRESS) as DarkForest;
 
     await world.addKeys(keyHashes);
+    await world.unpause({gasLimit: 30000000});
   });
 
   test('Init', async () => {    
-    const planet = Object.assign({}, PLANET_1);
-    const callArgs = prepareInit(876, 949, planet);
+    const callArgs = prepareInit(PLANET_INIT_COORDS[0], PLANET_INIT_COORDS[1], PLANET_INIT);
     await world.initializePlayer(...callArgs, { gasLimit: 30000000});
   });
 
-  test.only('Reveal', async () => {
-    const callArgs = prepareReveal(876,949,PLANET_1);
+  test('Reveal', async () => {
+    const callArgs = prepareReveal(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
     await world.revealLocation(...callArgs, { gasLimit: 30000000});
 
-    const resp = await world.revealedCoords(PLANET_1.hex);
-    //expect(resp.x).eq(876);
-    //expect(resp.y).eq(949);
+    const resp = await world.revealedCoords(PLANET_1.id);
+    expect(resp.x.toNumber()).eq(PLANET_1_COORDS[0]);
+    expect(resp.y.toNumber()).eq(PLANET_1_COORDS[1]);
   });
 
   test('Move', async () => {
+    await increaseBlockchainTime();
 
+    const callArgs = prepareMove(
+      PLANET_1_COORDS[0],
+      PLANET_1_COORDS[1],
+      PLANET_2_COORDS[0],
+      PLANET_2_COORDS[1],
+      PLANET_1,
+      PLANET_2,
+      100,
+      0,
+      0
+    );
+    await world.move(...callArgs, { gasLimit: 30000000});
   });
 
   test('Whitelist', async () => {

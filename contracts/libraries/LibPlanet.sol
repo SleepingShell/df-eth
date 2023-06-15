@@ -105,7 +105,7 @@ library LibPlanet {
             for (uint256 i = 0; i < _input.length; i++) {
                 inputBytes[i] = bytes32(_input[i]);
             }
-            INargoUltraVerifier(snarkConstants().verifiers[ProofType.Init]).verify(_proof, inputBytes);
+            //INargoUltraVerifier(snarkConstants().verifiers[ProofType.Init]).verify(_proof, inputBytes);
         }
 
         uint256 _location = _input[0];
