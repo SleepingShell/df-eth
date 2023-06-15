@@ -29,7 +29,6 @@ const WORLD_RADIUS_MIN = initializers["WORLD_RADIUS_MIN"];
 /*** Hashing and Whitelist Keys ***/
 const mimc = await buildMimc();
 const keyHash = (key: string): string => {
-  //let input = bigIntFromKey(key).toString();
   const hash = mimc.multiHash([key]);
   return "0x" + (mimc.F.toString(hash, 16) as string).padStart(64,'0');
 }
@@ -84,6 +83,7 @@ describe('NoirSnark', () => {
   }
 
   beforeAll(async () => {
+    /// @note Usually the address stays this same, but this may need to be updated
     const CONTRACT_ADDRESS = "0x8950bab77f29E8f81e6F78AEA0a79bADD88Eeb13";
     world = (new ethers.ContractFactory(df.abi, df.bytecode, wallet)).attach(CONTRACT_ADDRESS) as DarkForest;
 
@@ -124,7 +124,6 @@ describe('NoirSnark', () => {
 
   test('Whitelist', async () => {
     const key = keys[0];
-    const hash = keyHashes[0];
     const recipient = wallet.address;
 
     const callArgs = prepareWhitelist(key, recipient);
@@ -132,7 +131,6 @@ describe('NoirSnark', () => {
     expect((await tx.wait()).status).eq(1);
 
     callArgs[0][0] = "0x00"
-    const failed = false;
 
     try {
       const tx2 = await world.useKey(...callArgs, { gasLimit: 30000000});
