@@ -83,6 +83,8 @@ describe('NoirSnark', () => {
   test('Init', async () => {    
     const callArgs = prepareInit(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
     await world.initializePlayer(...callArgs, { gasLimit: 30000000});
+    let planet = await world.planets(PLANET_1.id);
+    expect(planet.owner == wallet.address);
   });
 
   test('Reveal', async () => {
@@ -115,6 +117,9 @@ describe('NoirSnark', () => {
     await world.refreshPlanet(PLANET_1.id);
     const tx = await world.move(...callArgs, { gasLimit: 30000000});
     await tx.wait();
+
+    let planet = await world.planets(PLANET_2.id);
+    expect(planet.owner == wallet.address);
   }, {timeout: 400000});
 
   test('Whitelist', async () => {
