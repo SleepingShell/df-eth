@@ -285,7 +285,6 @@ contract WithStorage {
             inputBytes[i] = bytes32(inputs[i]);
         }
         
-        //return INargoUltraVerifier(snarkConstants().verifiers[pType]).verify(proof, inputBytes);
-        return true;
+        return INargoUltraVerifier(snarkConstants().verifiers[pType]).verify(proof, inputBytes);
     }
 }

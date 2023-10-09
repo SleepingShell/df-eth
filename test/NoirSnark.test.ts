@@ -1,4 +1,4 @@
-import ethers, { BigNumberish, Contract } from 'ethers';
+import ethers, { BigNumber, BigNumberish, Contract } from 'ethers';
 
 import { beforeAll, describe, expect, test } from 'vitest';
 import { readFileSync, writeFileSync } from 'fs';
@@ -52,20 +52,7 @@ const PLANET_2 = new TestLocation({
 })
 const PLANET_2_COORDS = [151, 997];
 
-/*
-const PLANET_INIT = new TestLocation({
-  hex: '00007dc92e38c3ed48bef2c636f7b520e68c0754a08459a0300c37a50131c621',
-  perlin: 13,
-  distFromOrigin: 0
-})
-const PLANET_INIT_COORDS = [884053,929367];
-*/
-const PLANET_INIT = new TestLocation({
-  hex: '596bdd6734a573e6abef5e36ef6b42f713d729e3414c5589def5eb23f474'.padStart(64,'0'),
-  perlin: 15,
-  distFromOrigin: 0
-});
-const PLANET_INIT_COORDS = [20589, 36829]
+const SHIP_ID = BigNumber.from('0x8c1af698493b2b10f41a33cc7588f0b17b24c6c1cc6e9688124b667a7fec4c94');
 
 /*** Tests ***/
 describe('NoirSnark', () => {
@@ -87,12 +74,14 @@ describe('NoirSnark', () => {
     const CONTRACT_ADDRESS = "0x8950bab77f29E8f81e6F78AEA0a79bADD88Eeb13";
     world = (new ethers.ContractFactory(df.abi, df.bytecode, wallet)).attach(CONTRACT_ADDRESS) as DarkForest;
 
-    await world.addKeys(keyHashes);
-    await world.unpause({gasLimit: 30000000});
+    await world.addKeys(keyHashes, {gasLimit: 30000000});
+    if (await world.paused()) {
+      await world.unpause({gasLimit: 30000000});
+    }
   });
 
   test('Init', async () => {    
-    const callArgs = prepareInit(PLANET_INIT_COORDS[0], PLANET_INIT_COORDS[1], PLANET_INIT);
+    const callArgs = prepareInit(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
     await world.initializePlayer(...callArgs, { gasLimit: 30000000});
   });
 
@@ -108,6 +97,9 @@ describe('NoirSnark', () => {
   test('Move', async () => {
     await increaseBlockchainTime();
 
+    // Give spaceship
+    await world.adminGiveSpaceShip(PLANET_1.id, wallet.address, 10);
+
     const callArgs = prepareMove(
       PLANET_1_COORDS[0],
       PLANET_1_COORDS[1],
@@ -115,12 +107,15 @@ describe('NoirSnark', () => {
       PLANET_2_COORDS[1],
       PLANET_1,
       PLANET_2,
-      100,
+      1000,
       0,
-      0
+      0,
+      SHIP_ID
     );
-    await world.move(...callArgs, { gasLimit: 30000000});
-  });
+    await world.refreshPlanet(PLANET_1.id);
+    const tx = await world.move(...callArgs, { gasLimit: 30000000});
+    await tx.wait();
+  }, {timeout: 400000});
 
   test('Whitelist', async () => {
     const key = keys[0];
@@ -130,8 +125,8 @@ describe('NoirSnark', () => {
     const tx = await world.useKey(...callArgs, { gasLimit: 30000000});
     expect((await tx.wait()).status).eq(1);
 
+    // Key hash must be valid
     callArgs[0][0] = "0x00"
-
     try {
       const tx2 = await world.useKey(...callArgs, { gasLimit: 30000000});
       expect((await tx2.wait()).status).eq(0);
@@ -173,8 +168,7 @@ function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation
   ],
   BytesLike
 ] {
-  //const proof = proveInit(x, y, planetLoc);
-  const proof = [0]
+  const proof = proveInit(x, y, planetLoc);
   return [
     [
       planetLoc.id,
@@ -207,8 +201,7 @@ function prepareReveal(
     BytesLike
   ]
 {
-  //const proof = proveReveal(x,y,planetLoc);
-  const proof = [0];
+  const proof = proveReveal(x,y,planetLoc);
   return [
     [
       planetLoc.id,
@@ -255,14 +248,14 @@ function prepareMove(
     BytesLike
   ]
 {
-  //const proof = proveMove(x1,y1,x2,y2,oldLoc,newLoc,maxDist);
-  const proof = [0];
+  const proof = proveMove(x1,y1,x2,y2,oldLoc,newLoc,maxDist);
   return [
     [
       oldLoc.id,
       newLoc.id,
       newLoc.perlin,
-      newLoc.distFromOrigin + 1,
+      //newLoc.distFromOrigin + 1,
+      WORLD_RADIUS_MIN,
       maxDist,
       PLANETHASH_KEY,
       SPACETYPE_KEY,
@@ -295,7 +288,7 @@ function proveReveal(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation):
     }
   }));
 
-  return "0x" + prove(args, reveal_folder_path).toString();
+  return "0x" + prove("reveal", args, reveal_folder_path).toString();
 }
 
 function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): string {
@@ -319,13 +312,13 @@ function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): s
     }
   }));
 
-  return "0x" + prove(args, initialize_folder_path).toString();
+  return "0x" + prove("init", args, initialize_folder_path).toString();
 }
 
 function proveWhitelist(key: string, key_hash: string, recipient: string): string {
   const obj = Object.assign({}, { key, key_hash, recipient });
   const args = stringify(obj);
-  return "0x" +  prove(args, whitelist_folder_path).toString()
+  return "0x" +  prove("whitelist", args, whitelist_folder_path).toString()
 }
 
 function proveMove(
@@ -366,54 +359,27 @@ function proveMove(
     r: WORLD_RADIUS_MIN,
     planethash_key: PLANETHASH_KEY,
     spacetype_key: SPACETYPE_KEY,
-    scale: PERLIN_LENGTH_SCALE
+    scale: PERLIN_LENGTH_SCALE,
+    max_move: padHex(maxDist)
   }));
 
-  return "0x" + prove(args, move_folder_path).toString();
+  return "0x" + prove("move", args, move_folder_path).toString();
 }
 
 interface AbiHashes {
   [key: string]: string;
 }
 
-function prove(proverToml: string, folder: string, testCase = "test") {
+function prove(name: string, proverToml: string, folder: string) {
   const fpath = path.join(__dirname, folder);
-  // get the existent hashes for different proof names
-  const abiHashes: AbiHashes = JSON.parse(
-    readFileSync(`${fpath}/proofs/abiHashes.json`, 'utf8'),
-  );
-
-  // get the hash of the circuit
-  const circuit = readFileSync(`${fpath}/src/main.nr`, 'utf8');
-
-  // hash all of it together
-  const abiHash = keccak256("0x"+Buffer.from(proverToml.concat(circuit)).toString('hex'));
-
-  // we also need to prove if there's no proof already
-  let existentProof: string | boolean;
-  try {
-    existentProof = readFileSync(
-      `${fpath}/proofs/${testCase}.proof`,
-      'utf8',
-    );
-  } catch (e) {
-    existentProof = false;
-  }
 
   // if they differ, we need to re-prove
-  if (abiHashes[testCase] !== abiHash || !existentProof) {
-    console.log(`Proving "${testCase}"...`);
-    writeFileSync(`${fpath}/Prover.toml`, proverToml);
+  console.log(`Proving "${folder}"...`);
+  writeFileSync(`${fpath}/Prover.toml`, proverToml);
+  execSync(`nargo prove`, {cwd: fpath });
+  console.log(`New proof for "${folder}" written`);
 
-    execSync(`nargo prove ${testCase} --show-output`, {cwd: fpath });
-
-    abiHashes[testCase] = abiHash;
-    const updatedHashes = JSON.stringify(abiHashes, null, 2);
-    writeFileSync(`${fpath}/proofs/abiHashes.json`, updatedHashes);
-    console.log(`New proof for "${testCase}" written`);
-  }
-
-  const proof = readFileSync(`${fpath}/proofs/${testCase}.proof`);
+  const proof = readFileSync(`${fpath}/proofs/${name}.proof`);
   return proof;
 }
 
