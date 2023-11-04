@@ -17,6 +17,14 @@ import { bigIntFromKey, generateKeys } from '@darkforest_eth/whitelist';
 import 'dotenv/config';
 import { TestLocation } from './utils/TestLocation';
 
+import { BarretenbergBackend } from '@noir-lang/backend_barretenberg';
+import { Noir, abi } from '@noir-lang/noir_js';
+import circuit_biomebase from "./circuits/biomebase.json";
+import circuit_init from "./circuits/init.json";
+import circuit_move from "./circuits/move.json";
+import circuit_reveal from "./circuits/reveal.json";
+import circuit_whitelist from "./circuits/whitelist.json";
+
 /*** DarkForest game configuration ***/
 const toml = parse(readFileSync("darkforest.toml").toString());
 const initializers = toml["initializers"];
@@ -54,6 +62,21 @@ const PLANET_2_COORDS = [151, 997];
 
 const SHIP_ID = BigNumber.from('0x8c1af698493b2b10f41a33cc7588f0b17b24c6c1cc6e9688124b667a7fec4c94');
 
+enum CircuitType {
+  Biomebase,
+  Init,
+  Move,
+  Reveal,
+  Whitelist
+}
+
+const circuit_map = {};
+circuit_map[CircuitType.Biomebase] = circuit_biomebase;
+circuit_map[CircuitType.Init] = circuit_init;
+circuit_map[CircuitType.Move] = circuit_move;
+circuit_map[CircuitType.Reveal] = circuit_reveal;
+circuit_map[CircuitType.Whitelist] = circuit_whitelist;
+
 /*** Tests ***/
 describe('NoirSnark', () => {
   let world: DarkForest;
@@ -80,8 +103,8 @@ describe('NoirSnark', () => {
     }
   });
 
-  test('Init', async () => {    
-    const callArgs = prepareInit(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
+  test.only('Init', async () => {    
+    const callArgs = await prepareInit(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
     await world.initializePlayer(...callArgs, { gasLimit: 30000000});
     let planet = await world.planets(PLANET_1.id);
     expect(planet.owner == wallet.address);
@@ -161,8 +184,8 @@ function prepareWhitelist(key: string, recipient: string): [[BigNumberish, BigNu
   ]
 }
 
-function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation
-):[
+async function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation
+):Promise<[
   [
     BigNumberish,
     BigNumberish,
@@ -172,7 +195,7 @@ function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation
     BigNumberish
   ],
   BytesLike
-] {
+]> {
   const proof = proveInit(x, y, planetLoc);
   return [
     [
@@ -293,11 +316,12 @@ function proveReveal(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation):
     }
   }));
 
-  return "0x" + prove("reveal", args, reveal_folder_path).toString();
+  //return "0x" + prove("reveal", args, reveal_folder_path).toString();
+  return "0x" + prove(CircuitType.Reveal, args).toString();
 }
 
-function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): string {
-  const args = stringify(Object.assign({}, {
+async function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): Promise<string> {
+  const args = (Object.assign({}, {
     commit: '0x'+planetLoc.hex,
     perlin: padHex(planetLoc.perlin),
     planethash_key: PLANETHASH_KEY as number,
@@ -317,7 +341,11 @@ function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): s
     }
   }));
 
-  return "0x" + prove("init", args, initialize_folder_path).toString();
+  //return "0x" + prove("init", args, initialize_folder_path).toString();
+
+  //return "0x" + await prove(CircuitType.Init, args).toString();
+  const proof = await prove(CircuitType.Init, args);
+  return "0x" + proof;
 }
 
 function proveWhitelist(key: string, key_hash: string, recipient: string): string {
@@ -375,17 +403,15 @@ interface AbiHashes {
   [key: string]: string;
 }
 
-function prove(name: string, proverToml: string, folder: string) {
-  const fpath = path.join(__dirname, folder);
 
-  // if they differ, we need to re-prove
-  console.log(`Proving "${folder}"...`);
-  writeFileSync(`${fpath}/Prover.toml`, proverToml);
-  execSync(`nargo prove`, {cwd: fpath });
-  console.log(`New proof for "${folder}" written`);
 
-  const proof = readFileSync(`${fpath}/proofs/${name}.proof`);
-  return proof;
+async function prove(circuit_name: CircuitType, args: abi.InputMap): Promise<string> {
+  const circuit = circuit_map[circuit_name];
+  const backend = new BarretenbergBackend(circuit);
+  const noir = new Noir(circuit, backend);
+
+  const proof = await noir.generateFinalProof(args);
+  return proof.proof.toString();
 }
 
 // Convert a string to hex and pad it to 64 characters
