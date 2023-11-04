@@ -88,7 +88,8 @@
     "test:snarks": "vitest test/NoirSnark.test.ts"
   },
   "dependencies": {
-    "@noir-lang/noir_js": "^0.19.0",
+    "@noir-lang/backend_barretenberg": "^0.17.0",
+    "@noir-lang/noir_js": "^0.17.0",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "circomlibjs": "^0.1.7",

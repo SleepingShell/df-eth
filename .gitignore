@@ -24,3 +24,5 @@ tsconfig.ref.tsbuildinfo
 
 # Local development version of darkforest.toml
 darkforest.localhost.toml
+
+circuits/
