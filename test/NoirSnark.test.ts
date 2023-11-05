@@ -111,7 +111,7 @@ describe('NoirSnark', () => {
   });
 
   test('Reveal', async () => {
-    const callArgs = prepareReveal(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
+    const callArgs = await prepareReveal(PLANET_1_COORDS[0], PLANET_1_COORDS[1], PLANET_1);
     await world.revealLocation(...callArgs, { gasLimit: 30000000});
 
     const resp = await world.revealedCoords(PLANET_1.id);
@@ -125,7 +125,7 @@ describe('NoirSnark', () => {
     // Give spaceship
     await world.adminGiveSpaceShip(PLANET_1.id, wallet.address, 10);
 
-    const callArgs = prepareMove(
+    const callArgs = await prepareMove(
       PLANET_1_COORDS[0],
       PLANET_1_COORDS[1],
       PLANET_2_COORDS[0],
@@ -149,7 +149,7 @@ describe('NoirSnark', () => {
     const key = keys[0];
     const recipient = wallet.address;
 
-    const callArgs = prepareWhitelist(key, recipient);
+    const callArgs = await prepareWhitelist(key, recipient);
     const tx = await world.useKey(...callArgs, { gasLimit: 30000000});
     expect((await tx.wait()).status).eq(1);
 
@@ -163,17 +163,12 @@ describe('NoirSnark', () => {
   })
 })
 
-const whitelist_folder_path = "../../whitelist";
-const initialize_folder_path = "../../init";
-const reveal_folder_path = "../../reveal";
-const move_folder_path = "../../move";
-
-function prepareWhitelist(key: string, recipient: string): [[BigNumberish, BigNumberish], BytesLike] {
+async function prepareWhitelist(key: string, recipient: string): Promise<[[BigNumberish, BigNumberish], BytesLike]> {
   const key_hash = keyHash(key);
 
   let keyStr = BigInt(key).toString(16);
   keyStr = keyStr.length % 2 != 0 ? '0' + keyStr : keyStr;
-  const proof = proveWhitelist('0x'+keyStr, key_hash, recipient);
+  const proof = await proveWhitelist('0x'+keyStr, key_hash, recipient);
 
   return [
     [
@@ -196,7 +191,7 @@ async function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLoca
   ],
   BytesLike
 ]> {
-  const proof = proveInit(x, y, planetLoc);
+  const proof = await proveInit(x, y, planetLoc);
   return [
     [
       planetLoc.id,
@@ -210,11 +205,11 @@ async function prepareInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLoca
   ]
 }
 
-function prepareReveal(
+async function prepareReveal(
   x: BigNumberish,
   y: BigNumberish,
   planetLoc: TestLocation
-): [
+): Promise<[
     [
       BigNumberish,
       BigNumberish,
@@ -227,9 +222,9 @@ function prepareReveal(
       BigNumberish
     ],
     BytesLike
-  ]
+  ]>
 {
-  const proof = proveReveal(x,y,planetLoc);
+  const proof = await proveReveal(x,y,planetLoc);
   return [
     [
       planetLoc.id,
@@ -246,7 +241,7 @@ function prepareReveal(
   ];
 }
 
-function prepareMove(
+async function prepareMove(
   x1: BigNumberish,
   y1: BigNumberish,
   x2: BigNumberish,
@@ -258,7 +253,7 @@ function prepareMove(
   silverMoved: BigNumberish,
   movedArtifactId: BigNumberish = 0,
   abandoning: BigNumberish = 0
-): [
+): Promise<[
       [
         BigNumberish,
         BigNumberish,
@@ -274,9 +269,9 @@ function prepareMove(
         BigNumberish
       ],
     BytesLike
-  ]
+  ]>
 {
-  const proof = proveMove(x1,y1,x2,y2,oldLoc,newLoc,maxDist);
+  const proof = await proveMove(x1,y1,x2,y2,oldLoc,newLoc,maxDist);
   return [
     [
       oldLoc.id,
@@ -297,8 +292,8 @@ function prepareMove(
   ]
 }
 
-function proveReveal(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): string {
-  const args = stringify(Object.assign({}, {
+async function proveReveal(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): Promise<string> {
+  const args = (Object.assign({}, {
     commit: '0x'+planetLoc.hex,
     perlin: padHex(planetLoc.perlin),
     planethash_key: PLANETHASH_KEY,
@@ -316,8 +311,8 @@ function proveReveal(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation):
     }
   }));
 
-  //return "0x" + prove("reveal", args, reveal_folder_path).toString();
-  return "0x" + prove(CircuitType.Reveal, args).toString();
+  const proof = await prove(CircuitType.Reveal, args);
+  return "0x" + proof;
 }
 
 async function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocation): Promise<string> {
@@ -341,20 +336,17 @@ async function proveInit(x: BigNumberish, y: BigNumberish, planetLoc: TestLocati
     }
   }));
 
-  //return "0x" + prove("init", args, initialize_folder_path).toString();
-
-  //return "0x" + await prove(CircuitType.Init, args).toString();
   const proof = await prove(CircuitType.Init, args);
   return "0x" + proof;
 }
 
-function proveWhitelist(key: string, key_hash: string, recipient: string): string {
-  const obj = Object.assign({}, { key, key_hash, recipient });
-  const args = stringify(obj);
-  return "0x" +  prove("whitelist", args, whitelist_folder_path).toString()
+async function proveWhitelist(key: string, key_hash: string, recipient: string): Promise<string> {
+  const args = Object.assign({}, { key, key_hash, recipient });
+  const proof = await prove(CircuitType.Whitelist, args);
+  return "0x" + proof;
 }
 
-function proveMove(
+async function proveMove(
   x1: BigNumberish,
   y1: BigNumberish,
   x2: BigNumberish,
@@ -363,7 +355,7 @@ function proveMove(
   newLoc: TestLocation,
   maxDist: BigNumberish,
 ) {
-  const args = stringify(Object.assign({},{
+  const args = (Object.assign({},{
     from: {
       x: {
         x: padHex(x1),
@@ -396,14 +388,9 @@ function proveMove(
     max_move: padHex(maxDist)
   }));
 
-  return "0x" + prove("move", args, move_folder_path).toString();
+  const proof = await prove(CircuitType.Move, args);
+  return "0x" + proof;
 }
-
-interface AbiHashes {
-  [key: string]: string;
-}
-
-
 
 async function prove(circuit_name: CircuitType, args: abi.InputMap): Promise<string> {
   const circuit = circuit_map[circuit_name];
